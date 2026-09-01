@@ -1,0 +1,76 @@
+-- DataPulse V1 - KPI validation
+-- Validated against datapulse-v0.datapulse_mart.events
+
+SELECT
+  COUNT(*) AS total_events,
+  COUNT(DISTINCT customer_key) AS unique_users,
+
+  COUNT(DISTINCT CASE
+    WHEN event_name = 'view_item' THEN customer_key
+  END) AS product_viewers,
+
+  COUNT(DISTINCT CASE
+    WHEN event_name = 'add_to_cart' THEN customer_key
+  END) AS add_to_cart_users,
+
+  COUNT(DISTINCT CASE
+    WHEN event_name = 'begin_checkout' THEN customer_key
+  END) AS checkout_users,
+
+  COUNT(DISTINCT CASE
+    WHEN event_name = 'purchase'
+      AND purchase_quality_status = 'valid'
+    THEN customer_key
+  END) AS unique_purchasers,
+
+  COUNTIF(event_name = 'purchase') AS purchase_events,
+
+  COUNTIF(
+    event_name = 'purchase'
+    AND purchase_quality_status = 'valid'
+  ) AS valid_purchases,
+
+  COUNTIF(
+    event_name = 'purchase'
+    AND purchase_quality_status != 'valid'
+  ) AS invalid_purchases,
+
+  SUM(CASE
+    WHEN event_name = 'purchase'
+      AND purchase_quality_status = 'valid'
+    THEN purchase_revenue
+    ELSE 0
+  END) AS revenue,
+
+  SUM(CASE
+    WHEN event_name = 'purchase'
+      AND purchase_quality_status = 'valid'
+    THEN total_item_quantity
+    ELSE 0
+  END) AS items_purchased,
+
+  COUNT(DISTINCT CASE
+    WHEN identity_status != 'anonymous' THEN customer_key
+  END) AS identified_users,
+
+  COUNT(DISTINCT CASE
+    WHEN identity_status = 'anonymous' THEN customer_key
+  END) AS anonymous_users
+  FROM `datapulse-v0.datapulse_mart.events`;
+
+
+
+-- Output
+-- total_events        264485
+-- unique_users         42891
+-- product_viewers      11004
+-- add_to_cart_users     1964
+-- checkout_users        1133
+-- unique_purchasers      434
+-- purchase_events        738
+-- valid_purchases        468
+-- invalid_purchases      270
+-- revenue              32144.0
+-- items_purchased        1939
+-- identified_users       1133
+-- anonymous_users       41758
